@@ -7,6 +7,21 @@ This repository implements the complete end-to-end workflow using **LangGraph** 
 
 ---
 
+## Quick Demonstration & Artifacts
+
+📹 **Demo Video**: [**`demo.mp4`**](demo.mp4) (H.264 screen walk-through compilation)
+📄 **Implementation Plan**: [**`docs/IMPLEMENTATION_PLAN.md`**](docs/IMPLEMENTATION_PLAN.md)
+📊 **Pipeline Walk-through Logs**: [**`docs/WALKTHROUGH.md`**](docs/WALKTHROUGH.md)
+
+### Dashboard Overview
+![AmosFlow AI Dashboard](thumbnail.png)
+
+### Live Workflow Session (WebP)
+![AmosFlow AI Session Walkthrough](gtm_pipeline_demo.webp)
+
+---
+
+
 ## Architecture Diagram
 
 The system is designed with a strict separation of concerns, separating the AI reasoning graph from operational service interfaces:
@@ -97,7 +112,7 @@ APOLLO_API_KEY=your-apollo-person-search-key
 GOOGLE_SHEETS_CREDENTIALS=path/to/sheets-credentials.json
 GOOGLE_SHEETS_SPREADSHEET_ID=your-google-spreadsheet-id
 ```
-*Note: If no API keys are provided, the system gracefully falls back to mock engines, BeautifulSoup scraping, and demo placeholder profiles, making it 100% runnable out of the box.*
+*Note: The project runs without optional API credentials by using clearly labeled simulated data and local fallbacks for demonstration purposes.*
 
 ---
 

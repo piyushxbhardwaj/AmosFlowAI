@@ -66,13 +66,19 @@ class ReplySimulationRequest(BaseModel):
 
 # REST Endpoints
 
+pipeline_running = False
+
 def process_csv_pipeline():
     """
     Reads the CSV and runs outreach pipeline sequentially.
     """
+    global pipeline_running
+    pipeline_running = True
+    
     csv_path = os.path.join("data", "companies.csv")
     if not os.path.exists(csv_path):
         logger.error(f"Companies CSV not found at {csv_path}")
+        pipeline_running = False
         return
         
     logger.info("Starting CSV bulk outreach process...")
@@ -91,6 +97,8 @@ def process_csv_pipeline():
         logger.info("Bulk CSV outreach execution finished.")
     except Exception as e:
         logger.error(f"Failed to read CSV: {e}")
+    finally:
+        pipeline_running = False
 
 @app.post("/run", summary="Trigger the GTM bulk pipeline run")
 def run_pipeline(background_tasks: BackgroundTasks):
@@ -98,6 +106,10 @@ def run_pipeline(background_tasks: BackgroundTasks):
     Asynchronously reads data/companies.csv and executes target enrichment,
     decision maker search, personalized copy drafting, and CRM sync.
     """
+    global pipeline_running
+    if pipeline_running:
+        return {"status": "ignored", "message": "GTM pipeline run is already in progress."}
+        
     background_tasks.add_task(process_csv_pipeline)
     return {"status": "success", "message": "GTM pipeline run initiated in the background."}
 
@@ -159,7 +171,7 @@ def force_scheduler():
     """
     try:
         logger.info("Forced follow-up check triggered via API.")
-        triggered = execute_followup_check()
+        triggered = execute_followup_check(force=True)
         return {
             "status": "success", 
             "message": f"Follow-up check execution finished.",
@@ -167,6 +179,83 @@ def force_scheduler():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/logs-view", response_class=HTMLResponse, include_in_schema=False)
+def logs_view():
+    log_path = "logs/workflow.log"
+    content = ""
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    
+    html = f"""
+    <html>
+    <head>
+        <title>Workflow Logs</title>
+        <style>
+            body {{ background-color: #0f172a; color: #f1f5f9; font-family: monospace; padding: 2rem; }}
+            pre {{ background-color: #1e293b; padding: 1.5rem; border-radius: 8px; border: 1px solid #334155; white-space: pre-wrap; }}
+        </style>
+    </head>
+    <body>
+        <h2>System Workflow Logs (workflow.log)</h2>
+        <pre>{content}</pre>
+    </body>
+    </html>
+    """
+    return html
+
+@app.get("/demo-closing", response_class=HTMLResponse, include_in_schema=False)
+def demo_closing():
+    html = """
+    <html>
+    <head>
+        <title>Thank You - AmosFlow AI</title>
+        <style>
+            body { 
+                background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%); 
+                color: #ffffff; 
+                font-family: 'Inter', sans-serif; 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                justify-content: center; 
+                height: 100vh; 
+                margin: 0; 
+            }
+            .card {
+                background: rgba(30, 41, 59, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 3rem;
+                border-radius: 16px;
+                text-align: center;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                max-width: 600px;
+            }
+            h1 { color: #c084fc; font-size: 3rem; margin-bottom: 0.5rem; }
+            h2 { color: #f1f5f9; font-weight: 300; font-size: 1.5rem; margin-bottom: 2rem; }
+            ul { text-align: left; line-height: 1.8; color: #94a3b8; font-size: 1.1rem; }
+            .thank-you { font-size: 1.3rem; color: #e2e8f0; font-weight: 600; margin-top: 2rem; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>AmosFlow AI</h1>
+            <h2>Autonomous GTM Automation Pipeline</h2>
+            <ul>
+                <li><strong>LangGraph State Orchestration</strong> for AI workflows.</li>
+                <li><strong>FastAPI Backend</strong> exposing CRM and pipeline triggers.</li>
+                <li><strong>Streamlit Dashboard</strong> for real-time CRM and campaign metrics.</li>
+                <li><strong>Dynamic Mocks</strong> for offline, out-of-the-box operation.</li>
+            </ul>
+            <div class="thank-you">Thank you for watching the demonstration!</div>
+        </div>
+    </body>
+    </html>
+    """
+    return html
 
 if __name__ == "__main__":
     import uvicorn
