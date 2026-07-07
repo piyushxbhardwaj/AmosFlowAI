@@ -87,7 +87,7 @@ The Streamlit dashboard interface and API bindings were fully validated inside a
 
 ### Live Dashboard Verification Session Recording
 
-![AmosFlow AI GTM Pipeline Demo](./gtm_pipeline_demo.webp)
+![AmosFlow AI GTM Pipeline Demo](../gtm_pipeline_demo.webp)
 
 ---
 
