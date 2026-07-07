@@ -207,7 +207,7 @@ with m4:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-value">{avg_lead_score:.2f}</div>
-        <div class="metric-label">Avg Lead Score</div>
+        <div class="metric-label">Avg GTM Fit Score</div>
     </div>
     """, unsafe_allow_html=True)
 
