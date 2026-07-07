@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# SQLite Database
+gtm_crm.db
+
+# Environment variables & secrets
+.env
+token.json
+credentials.json
+*.json
+
+# Logs
+logs/
+*.log
+
+# Streamlit
+.streamlit/
