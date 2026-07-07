@@ -58,11 +58,16 @@ def run_crm_agent(company_id: int, enriched_data: dict, contact_id: int = None) 
     industry = "AI SaaS" if "ai" in str(enriched_data.get("ai_summary", "")).lower() else "Software & Technology"
     
     # 3. Update database CRM record
+    update_data = {
+        "lead_score": lead_score,
+        "industry": industry
+    }
+    if contact_id is not None:
+        update_data["contact_id"] = contact_id
+        
     database.add_or_update_crm(
         company_id=company_id,
-        contact_id=contact_id,
-        lead_score=lead_score,
-        industry=industry
+        **update_data
     )
     
     # 4. Sync SQLite database contents to Google Sheets (if configured)
