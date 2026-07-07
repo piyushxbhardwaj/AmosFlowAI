@@ -4,6 +4,90 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Curated simulated contacts for our 10 target companies (Demo fallback mode)
+CURATED_CONTACTS = {
+    "vercel": {
+        "name": "Lee Robinson",
+        "role": "VP of Product",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/leerob",
+        "confidence": 0.85,
+        "simulated": True
+    },
+    "cursor": {
+        "name": "Arvid Lunnemark",
+        "role": "Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/arvidlunnemark",
+        "confidence": 0.90,
+        "simulated": True
+    },
+    "linear": {
+        "name": "Karri Saarinen",
+        "role": "CEO & Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/karrisaarinen",
+        "confidence": 0.92,
+        "simulated": True
+    },
+    "resend": {
+        "name": "Zeno Rocha",
+        "role": "Founder & CEO",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/zenorocha",
+        "confidence": 0.93,
+        "simulated": True
+    },
+    "supabase": {
+        "name": "Paul Copplestone",
+        "role": "CEO & Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/paulcopplestone",
+        "confidence": 0.91,
+        "simulated": True
+    },
+    "phind": {
+        "name": "Michael Tang",
+        "role": "Founder & CEO",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/michaeltang-phind",
+        "confidence": 0.88,
+        "simulated": True
+    },
+    "perplexity": {
+        "name": "Aravind Srinivas",
+        "role": "CEO & Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/aravindsrinivas",
+        "confidence": 0.94,
+        "simulated": True
+    },
+    "midjourney": {
+        "name": "David Holz",
+        "role": "Founder & CEO",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/davidholz",
+        "confidence": 0.82,
+        "simulated": True
+    },
+    "jasper": {
+        "name": "Dave Rogenmoser",
+        "role": "Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/daverogenmoser",
+        "confidence": 0.86,
+        "simulated": True
+    },
+    "langchain": {
+        "name": "Harrison Chase",
+        "role": "CEO & Co-Founder",
+        "email": "demo-contact@example.com",
+        "linkedin": "https://www.linkedin.com/in/harrisonchase",
+        "confidence": 0.95,
+        "simulated": True
+    }
+}
+
 def find_decision_maker(company_name: str, website: str) -> dict:
     """
     Finds a decision maker (CEO, Founder, Head of Growth, Marketing Lead) for the target company.
@@ -18,7 +102,6 @@ def find_decision_maker(company_name: str, website: str) -> dict:
             "Content-Type": "application/json",
             "Cache-Control": "no-cache"
         }
-        # Look for typical decision maker roles
         payload = {
             "api_key": apollo_key,
             "reveal_personal_emails": True,
@@ -33,7 +116,7 @@ def find_decision_maker(company_name: str, website: str) -> dict:
                 if person:
                     name = person.get("name", "Demo Contact (CEO)")
                     role = person.get("title", "Chief Executive Officer")
-                    email = person.get("email") or f"demo-contact@example.com"
+                    email = person.get("email") or "demo-contact@example.com"
                     linkedin = person.get("linkedin_url") or "https://www.linkedin.com/company/demo-contact"
                     
                     return {
@@ -45,11 +128,14 @@ def find_decision_maker(company_name: str, website: str) -> dict:
                         "simulated": False
                     }
         except Exception as e:
-            # Log error and fall back
             print(f"Apollo API lookup failed: {e}. Falling back to simulation.")
             
-    # Mock fallback (clearly labeled as Simulated Contact)
-    # Customize roles based on company profile for realistic simulation, but keep it neutral
+    # Curated simulated fallback search
+    comp_key = company_name.strip().lower()
+    if comp_key in CURATED_CONTACTS:
+        return CURATED_CONTACTS[comp_key]
+        
+    # Default generic mock fallback
     return {
         "name": f"Demo Contact ({company_name} CEO)",
         "role": "Chief Executive Officer",
