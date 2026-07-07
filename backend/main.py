@@ -66,13 +66,19 @@ class ReplySimulationRequest(BaseModel):
 
 # REST Endpoints
 
+pipeline_running = False
+
 def process_csv_pipeline():
     """
     Reads the CSV and runs outreach pipeline sequentially.
     """
+    global pipeline_running
+    pipeline_running = True
+    
     csv_path = os.path.join("data", "companies.csv")
     if not os.path.exists(csv_path):
         logger.error(f"Companies CSV not found at {csv_path}")
+        pipeline_running = False
         return
         
     logger.info("Starting CSV bulk outreach process...")
@@ -91,6 +97,8 @@ def process_csv_pipeline():
         logger.info("Bulk CSV outreach execution finished.")
     except Exception as e:
         logger.error(f"Failed to read CSV: {e}")
+    finally:
+        pipeline_running = False
 
 @app.post("/run", summary="Trigger the GTM bulk pipeline run")
 def run_pipeline(background_tasks: BackgroundTasks):
@@ -98,6 +106,10 @@ def run_pipeline(background_tasks: BackgroundTasks):
     Asynchronously reads data/companies.csv and executes target enrichment,
     decision maker search, personalized copy drafting, and CRM sync.
     """
+    global pipeline_running
+    if pipeline_running:
+        return {"status": "ignored", "message": "GTM pipeline run is already in progress."}
+        
     background_tasks.add_task(process_csv_pipeline)
     return {"status": "success", "message": "GTM pipeline run initiated in the background."}
 
