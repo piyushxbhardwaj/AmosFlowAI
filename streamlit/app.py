@@ -273,6 +273,7 @@ with tab2:
 # TAB 3: Target Contacts
 with tab3:
     st.header("Identified Decision Makers")
+    st.info("💡 **Demo Mode:** Contact names are based on publicly available leadership information. Email addresses are replaced with a simulated placeholder (`demo-contact@example.com`), and no actual outreach is performed.")
     if contacts:
         df_contacts = pd.DataFrame(contacts)
         df_contacts_display = df_contacts[[
@@ -283,7 +284,7 @@ with tab3:
             "role": "Role",
             "email": "Email Address",
             "linkedin": "LinkedIn URL",
-            "discovery_confidence": "Discovery Confidence"
+            "discovery_confidence": "Contact Confidence"
         })
         st.dataframe(df_contacts_display, use_container_width=True, hide_index=True)
     else:
