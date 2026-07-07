@@ -159,7 +159,7 @@ def force_scheduler():
     """
     try:
         logger.info("Forced follow-up check triggered via API.")
-        triggered = execute_followup_check()
+        triggered = execute_followup_check(force=True)
         return {
             "status": "success", 
             "message": f"Follow-up check execution finished.",

@@ -117,6 +117,18 @@ def queue_node(state: GTMState) -> Dict[str, Any]:
         
     logger.info(f"START NODE: queue_email for CRM ID {crm_id}")
     
+    # Check if initial email draft already exists to ensure idempotency
+    conn = database.get_db_connection()
+    existing = conn.execute("SELECT id FROM emails WHERE crm_id = ? AND email_type = 'Initial'", (crm_id,)).fetchone()
+    
+    if existing:
+        logger.info(f"Initial email draft already exists for CRM ID {crm_id}. Healing CRM stage to Emailed.")
+        conn.execute("UPDATE crm SET current_stage = 'Emailed' WHERE id = ?", (crm_id,))
+        conn.commit()
+        conn.close()
+        return {"crm_status": "Emailed"}
+    conn.close()
+        
     # Save and queue the email
     email_res = run_email_agent(
         crm_id=crm_id,
@@ -217,6 +229,18 @@ def queue_followup_node(state: FollowupState) -> Dict[str, Any]:
     
     logger.info(f"START NODE: queue_followup for CRM ID {crm_id}")
     
+    # Check if follow-up email draft already exists to ensure idempotency
+    conn = database.get_db_connection()
+    existing = conn.execute("SELECT id FROM emails WHERE crm_id = ? AND email_type = 'Followup'", (crm_id,)).fetchone()
+    
+    if existing:
+        logger.info(f"Follow-up email draft already exists for CRM ID {crm_id}. Healing CRM stage to Follow-up Sent.")
+        conn.execute("UPDATE crm SET current_stage = 'Follow-up Sent' WHERE id = ?", (crm_id,))
+        conn.commit()
+        conn.close()
+        return {"crm_status": "Follow-up Sent"}
+    conn.close()
+        
     # Queue email draft
     run_email_agent(
         crm_id=crm_id,
@@ -282,6 +306,15 @@ def execute_initial_outreach(company_name: str, website: str) -> dict:
     # 1. Register in SQLite database (idempotency check happens inside add_company)
     company_id = database.add_company(company_name, website)
     
+    # Check if this company has already been processed to ensure idempotency
+    conn = database.get_db_connection()
+    row = conn.execute("SELECT current_stage FROM crm WHERE company_id = ?", (company_id,)).fetchone()
+    conn.close()
+    
+    if row and row["current_stage"] in ["Emailed", "Follow-up Sent", "Replied"]:
+        logger.info(f"Outreach already completed for: {company_name} (Stage: {row['current_stage']}). Skipping pipeline.")
+        return {"crm_status": row["current_stage"]}
+    
     # 2. Setup initial state
     initial_state = {
         "company_name": company_name,
@@ -300,7 +333,7 @@ def execute_initial_outreach(company_name: str, website: str) -> dict:
     logger.info(f"Outreach Pipeline complete for: {company_name}. CRM Status: {final_state.get('crm_status')}")
     return final_state
 
-def execute_followup_check() -> List[dict]:
+def execute_followup_check(force: bool = False) -> List[dict]:
     """
     Scans the CRM for companies requiring a follow-up.
     Generates follow-up emails for non-responsive targets.
@@ -316,7 +349,9 @@ def execute_followup_check() -> List[dict]:
             next_date_str = record["next_followup_date"]
             
             should_trigger = False
-            if next_date_str:
+            if force:
+                should_trigger = True
+            elif next_date_str:
                 try:
                     next_date = datetime.fromisoformat(next_date_str)
                     if datetime.utcnow() >= next_date:
